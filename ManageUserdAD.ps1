@@ -3,12 +3,7 @@ Import-Module ActiveDirectory
 function Show-Menu {
     Clear-Host
     Write-Host "      ======== MENU ZARZĄDZANIA UŻYTKOWNIKAMI ========"
-    Write-Host "      1. Przegląd użytkowników"
-    Write-Host "      2. Dodawanie lub modyfikacja użytkownika"
-    Write-Host "      3. Usuwanie użytkownika"
-    Write-Host "      4. Przypisywanie użytkownika do grupy"
-    Write-Host "      5. Usuwanie uzytkownika z grupy"
-    Write-Host "      6. Resetowanie hasła użytkownika"
+    Write-Host "      1. Zarządzanie użytkownikami"
     Write-Host "      7. Odblokowanie konta"
     Write-Host "      8. Wyświetlanie historii logowania"
     Write-Host "      9. Przypisywanie uprawnień/kontenerów OU"
@@ -16,6 +11,33 @@ function Show-Menu {
     Write-Host "      11. Eksport listy użytkowników do CSV"
     Write-Host "      0. Wyjście" -ForegroundColor Red
     Write-Host "      ==============================================="
+}
+
+function User-Management-Menu {
+    do {
+        Clear-Host
+        Write-Host "      === Menu Zarządzania Użytkownikami ==="
+        Write-Host "      1. Lista użytkowników (z wyborem OU)"
+        Write-Host "      2. Dodawanie/modyfikacja użytkownika (e-mail, telefon, dział)"
+        Write-Host "      3. Dodanie użytkownika do grupy (z filtrowaniem grup)"
+        Write-Host "      4. Usunięcie użytkownika z grupy (z filtrowaniem grup)"
+        Write-Host "      5. Sprawdzenie członkostwa użytkownika w grupach"
+        Write-Host "      6. Zmiana hasła użytkownika"
+        Write-Host "      0. Wyjście" -ForegroundColor Red
+        $choice = Read-Host "Wybierz opcję (1-6 lub 0 aby wyjść)"
+
+        switch ($choice) {
+            1 { List-Users }
+            2 { AddOrModify-User }
+            3 { Add-UserToGroup }
+            4 { Remove-UserFromGroup }
+            5 { Check-UserGroups }
+            6 { Change-UserPassword }
+            0 { Write-Host "Wyjście " }
+            default { Write-Host "Nieprawidłowy wybór." }
+        }
+        if ($choice -ne "0") { Pause }
+    } while ($choice -ne "0")
 }
 
 function List-Users {
@@ -170,6 +192,21 @@ function Unlock-UserAccount {
     Pause
 }
 
+function Check-UserGroups {
+    $sam = Read-Host "Podaj login użytkownika (SamAccountName)"
+    $groups = Get-ADUser -Identity $sam -Properties MemberOf | Select-Object -ExpandProperty MemberOf
+    if ($groups) {
+        Write-Host "Użytkownik $sam należy do następujących grup:"
+        foreach ($group in $groups) {
+            $groupName = (Get-ADGroup -Identity $group).Name
+            Write-Host "- $groupName"
+        }
+    } else {
+        Write-Host "Użytkownik nie należy do żadnej grupy."
+    }
+    Pause
+}
+
 function Show-UserLogonHistory {
     $sam = Read-Host "Podaj login użytkownika"
     $user = Get-ADUser -Identity $sam
@@ -208,21 +245,59 @@ function Export-UsersToCSV {
     Pause
 }
 
+
+function User-Management-Menu {
+    do {
+        Clear-Host
+        Write-Host "      === Menu Zarządzania Użytkownikami ==="
+        Write-Host "      1. Lista użytkowników (z wyborem OU)"
+        Write-Host "      2. Dodawanie/modyfikacja użytkownika (e-mail, telefon, dział)"
+        Write-Host "      3. Dodanie użytkownika do grupy (z filtrowaniem grup)"
+        Write-Host "      4. Usunięcie użytkownika z grupy (z filtrowaniem grup)"
+        Write-Host "      5. Sprawdzenie członkostwa użytkownika w grupach"
+        Write-Host "      6. Zmiana hasła użytkownika"
+        Write-Host "      0. Wyjście" -ForegroundColor Red
+        $choice = Read-Host "Wybierz opcję (1-6 lub 0 aby wyjść)"
+
+        switch ($choice) {
+            1 { List-Users }
+            2 { AddOrModify-User }
+            3 { Add-UserToGroup }
+            4 { Remove-UserFromGroup }
+            5 { Check-UserGroups }
+            6 { Change-UserPassword }
+            0 { Write-Host "Wyjście " }
+            default { Write-Host "Nieprawidłowy wybór." }
+        }
+        if ($choice -ne "0") { Pause }
+    } while ($choice -ne "0")
+}
+
+function Change-UserPassword {
+    $sam = Read-Host "Podaj login użytkownika (SamAccountName)"
+    $newPass = Read-Host "Podaj nowe hasło"
+    Set-ADAccountPassword -Identity $sam -NewPassword (ConvertTo-SecureString $newPass -AsPlainText -Force) -Reset
+    Write-Host "Hasło zostało zmienione."
+    Pause
+}
+
 do {
     Show-Menu
     $choice = Read-Host "Wybierz opcję (1-11 lub 0 aby zakończyć)"
     switch ($choice) {
-        "1" { List-Users }
-        "2" { AddOrModify-User }
-        "3" { Remove-User }
-        "4" { Add-UserToGroup }
-        "5" { Remove-UserFromGroup }
-        "6" { Reset-UserPassword }
-        "7" { Unlock-UserAccount }
+    #    "1" { List-Users }
+    #    "2" { AddOrModify-User }
+    #    "3" { Remove-User }
+    #    "4" { Add-UserToGroup }
+    #    "5" { Remove-UserFromGroup }
+    #    "6" { Reset-UserPassword }
+        "1" { User-Management-Menu}   
+        "7" { Unlock-UserAccount } 
         "8" { Show-UserLogonHistory }
         "9" { Set-UserOU }
         "10" { Bulk-AddToGroup }
         "11" { Export-UsersToCSV }
+        "12" {User-Management-Menu }
         "0" { exit }
         default { Write-Host "Nieprawidłowy wybór."; Pause }
     }
