@@ -3,7 +3,7 @@ Import-Module ActiveDirectory
 function Show-Menu {
     Clear-Host
     Write-Host "      ======== MENU ZARZĄDZANIA UŻYTKOWNIKAMI ========" -ForegroundColor Green
-    Write-Host "      1. Zarządzanie użytkownikami"
+    Write-Host "      1. Zarządzanie użytkownikami" -ForegroundColor Yellow
     Write-Host "      7. Odblokowanie konta"
     Write-Host "      8. Wyświetlanie historii logowania"
     Write-Host "      9. Przypisywanie uprawnień/kontenerów OU"
@@ -246,33 +246,6 @@ function Export-UsersToCSV {
     Pause
 }
 
-
-function User-Management-Menu {
-    do {
-        Clear-Host
-        Write-Host "      === Menu Zarządzania Użytkownikami ==="
-        Write-Host "      1. Lista użytkowników (z wyborem OU)"
-        Write-Host "      2. Dodawanie/modyfikacja użytkownika (e-mail, telefon, dział)"
-        Write-Host "      3. Dodanie użytkownika do grupy (z filtrowaniem grup)"
-        Write-Host "      4. Usunięcie użytkownika z grupy (z filtrowaniem grup)"
-        Write-Host "      5. Sprawdzenie członkostwa użytkownika w grupach"
-        Write-Host "      6. Zmiana hasła użytkownika"
-        Write-Host "      0. Wyjście" -ForegroundColor Red
-        $choice = Read-Host "Wybierz opcję (1-6 lub 0 aby wyjść)"
-
-        switch ($choice) {
-            1 { List-Users }
-            2 { AddOrModify-User }
-            3 { Add-UserToGroup }
-            4 { Remove-UserFromGroup }
-            5 { Check-UserGroups }
-            6 { Change-UserPassword }
-            0 { Write-Host "Wyjście " }
-            default { Write-Host "Nieprawidłowy wybór." }
-        }
-        if ($choice -ne "0") { Pause }
-    } while ($choice -ne "0")
-}
 
 function Change-UserPassword {
     $sam = Read-Host "Podaj login użytkownika (SamAccountName)"
