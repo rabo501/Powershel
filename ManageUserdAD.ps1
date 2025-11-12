@@ -2,7 +2,7 @@ Import-Module ActiveDirectory
 
 function Show-Menu {
     Clear-Host
-    Write-Host "      ======== MENU ZARZĄDZANIA UŻYTKOWNIKAMI ========"
+    Write-Host "      ======== MENU ZARZĄDZANIA UŻYTKOWNIKAMI ========" -ForegroundColor Green
     Write-Host "      1. Zarządzanie użytkownikami"
     Write-Host "      7. Odblokowanie konta"
     Write-Host "      8. Wyświetlanie historii logowania"
@@ -10,13 +10,13 @@ function Show-Menu {
     Write-Host "      10. Masowe dodawanie do grupy (CSV)"
     Write-Host "      11. Eksport listy użytkowników do CSV"
     Write-Host "      0. Wyjście" -ForegroundColor Red
-    Write-Host "      ==============================================="
+    Write-Host "      ===============================================" -ForegroundColor Green
 }
 
 function User-Management-Menu {
     do {
         Clear-Host
-        Write-Host "      === Menu Zarządzania Użytkownikami ==="
+        Write-Host "      ======== MENU ZARZĄDZANIA UŻYTKOWNIKAMI ========" -ForegroundColor Green
         Write-Host "      1. Lista użytkowników (z wyborem OU)"
         Write-Host "      2. Dodawanie/modyfikacja użytkownika (e-mail, telefon, dział)"
         Write-Host "      3. Dodanie użytkownika do grupy (z filtrowaniem grup)"
@@ -24,6 +24,7 @@ function User-Management-Menu {
         Write-Host "      5. Sprawdzenie członkostwa użytkownika w grupach"
         Write-Host "      6. Zmiana hasła użytkownika"
         Write-Host "      0. Wyjście" -ForegroundColor Red
+        Write-Host "      ===============================================" -ForegroundColor Green
         $choice = Read-Host "Wybierz opcję (1-6 lub 0 aby wyjść)"
 
         switch ($choice) {
@@ -33,8 +34,8 @@ function User-Management-Menu {
             4 { Remove-UserFromGroup }
             5 { Check-UserGroups }
             6 { Change-UserPassword }
-            0 { Write-Host "Wyjście " }
-            default { Write-Host "Nieprawidłowy wybór." }
+            0 { Write-Host "Wyjście" }
+            default { Write-Host "Nieprawidłowy wybór." -ForegroundColor Red }
         }
         if ($choice -ne "0") { Pause }
     } while ($choice -ne "0")
@@ -297,8 +298,7 @@ do {
         "9" { Set-UserOU }
         "10" { Bulk-AddToGroup }
         "11" { Export-UsersToCSV }
-        "12" {User-Management-Menu }
         "0" { exit }
-        default { Write-Host "Nieprawidłowy wybór."; Pause }
+        default { Write-Host "Nieprawidłowy wybór." -ForegroundColor Red; Pause }
     }
 } while ($true)
