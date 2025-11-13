@@ -1,4 +1,10 @@
-﻿Add-Type -AssemblyName System.Net.Mail
+# Sposób uzycia
+# Należy stworzyć zaszyfrowany plik z hasłem do smtp za pomocą funkcji:
+# Read-Host "Podaj hasło do SMTP" -AsSecureString | ConvertFrom-SecureString | Set-Content ".\haslo_smtp.txt"
+# To dziala tylko na danym komputerze i użytkowniku
+# przed wykonaniem skryptu na innym komputerze lub użytkowniku należy ponownie wygenerować plik hasła
+
+ Add-Type -AssemblyName System.Net.Mail
 
 # Parametry
 $alertEmail = "informatyk@bolkow.pl"
@@ -45,5 +51,6 @@ if ($lowDisks.Count -gt 0) {
 } else {
     Write-Host "Wszystkie dyski mają powyżej $limitGB GB wolnego miejsca."
 }
+
 
 [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
