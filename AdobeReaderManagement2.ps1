@@ -1,4 +1,4 @@
-﻿# ==========================================================
+# ==========================================================
 # ZDALNE ZARZĄDZANIE ADOBE READER
 # Windows PowerShell 5.1 + WinRM
 #
@@ -604,7 +604,7 @@ do {
     Write-Host '========================================'
     Write-Host '1. Usuń Adobe Reader'
     Write-Host '2. Zainstaluj Adobe Reader'
-    Write-Host '3. Sprawdź instalację'
+    Write-Host '3. Sprawdź instalację na komputerach z listy'
     Write-Host '4. Lista komputerów'
     Write-Host '5. Wyjście'
     Write-Host ''
@@ -615,12 +615,14 @@ do {
         break
     }
 
+    # Zarządzanie zapisaną listą komputerów.
     if ($Wybor -eq '4') {
         try {
             Menu-ListyKomputerow
         }
         catch {
-            Write-Host "Błąd listy komputerów: $($_.Exception.Message)" -ForegroundColor Red
+            Write-Host "Błąd listy komputerów: $($_.Exception.Message)" `
+                -ForegroundColor Red
         }
 
         continue
@@ -631,23 +633,29 @@ do {
         continue
     }
 
-    try {
-        $Komputery = @(Pobierz-ListeKomputerow)
-    }
-    catch {
-        Write-Host "Nie można odczytać listy: $($_.Exception.Message)" -ForegroundColor Red
-        continue
-    }
+    # ------------------------------------------------------
+    # SPRAWDZENIE CAŁEJ ZAPISANEJ LISTY
+    # ------------------------------------------------------
 
-    if ($Komputery.Count -eq 0) {
-        Write-Host 'Lista komputerów jest pusta. Dodaj komputery w menu 4.' -ForegroundColor Yellow
-        continue
-    }
-
-    # Sprawdzenie tylko odczytuje informacje.
     if ($Wybor -eq '3') {
+        try {
+            $Komputery = @(Pobierz-ListeKomputerow)
+        }
+        catch {
+            Write-Host "Nie można odczytać listy: $($_.Exception.Message)" `
+                -ForegroundColor Red
+            continue
+        }
+
+        if ($Komputery.Count -eq 0) {
+            Write-Host 'Lista komputerów jest pusta. Dodaj komputery w menu 4.' `
+                -ForegroundColor Yellow
+            continue
+        }
+
         Write-Host ''
-        Write-Host 'SPRAWDZANIE INSTALACJI' -ForegroundColor Yellow
+        Write-Host 'SPRAWDZANIE INSTALACJI NA KOMPUTERACH Z LISTY' `
+            -ForegroundColor Yellow
 
         $Wyniki = @(
             Uruchom-NaKomputerach `
@@ -658,10 +666,19 @@ do {
 
         Write-Host ''
         $Wyniki |
-            Format-Table Komputer, Status, Program, Wersja, Szczegoly -AutoSize -Wrap
+            Format-Table Komputer, Status, Program, Wersja, Szczegoly `
+                -AutoSize -Wrap
+
+        Write-Host ''
+        Write-Host 'Aby wykonać operację tylko na wybranych komputerach,'
+        Write-Host 'wybierz z menu głównego instalację lub usuwanie.'
 
         continue
     }
+
+    # ------------------------------------------------------
+    # WYBÓR OPERACJI: INSTALACJA LUB USUWANIE
+    # ------------------------------------------------------
 
     $Operacja = if ($Wybor -eq '1') {
         'Usuwanie'
@@ -671,8 +688,63 @@ do {
     }
 
     Write-Host ''
+    Write-Host "WYBÓR KOMPUTERÓW — $Operacja" -ForegroundColor Cyan
+    Write-Host '1. Użyj zapisanej listy komputerów'
+    Write-Host '2. Podaj nazwy komputerów ręcznie'
+    Write-Host '3. Wróć do menu głównego'
+    Write-Host ''
+
+    $ZrodloKomputerow = Read-Host 'Wybierz opcję'
+
+    if ($ZrodloKomputerow -eq '3') {
+        continue
+    }
+
+    if ($ZrodloKomputerow -eq '1') {
+        try {
+            $Komputery = @(Pobierz-ListeKomputerow)
+        }
+        catch {
+            Write-Host "Nie można odczytać listy: $($_.Exception.Message)" `
+                -ForegroundColor Red
+            continue
+        }
+
+        if ($Komputery.Count -eq 0) {
+            Write-Host 'Lista komputerów jest pusta. Dodaj komputery w menu 4.' `
+                -ForegroundColor Yellow
+            continue
+        }
+    }
+    elseif ($ZrodloKomputerow -eq '2') {
+        $TekstKomputerow = Read-Host `
+            'Podaj nazwy komputerów po przecinku lub średniku'
+
+        $Komputery = @(Podziel-Nazwy -Tekst $TekstKomputerow)
+
+        if ($Komputery.Count -eq 0) {
+            Write-Host 'Nie podano nazw komputerów.' -ForegroundColor Yellow
+            continue
+        }
+    }
+    else {
+        Write-Host 'Nieprawidłowa opcja.' -ForegroundColor Yellow
+        continue
+    }
+
+    # ------------------------------------------------------
+    # PODGLĄD DLA WYBRANEJ LISTY LUB WPISANYCH NAZW
+    # ------------------------------------------------------
+
+    Write-Host ''
     Write-Host "PODGLĄD — $Operacja" -ForegroundColor Yellow
-    Write-Host 'Operacja dotyczy wszystkich komputerów z zapisanej listy.'
+    Write-Host 'Sprawdzane komputery:'
+
+    foreach ($Komputer in $Komputery) {
+        Write-Host "  - $Komputer"
+    }
+
+    Write-Host ''
 
     $PodgladWyniki = @(
         Uruchom-NaKomputerach `
@@ -683,7 +755,105 @@ do {
 
     Write-Host ''
     $PodgladWyniki |
-        Format-Table Komputer, Status, Program, Wersja, Szczegoly -AutoSize -Wrap
+        Format-Table Komputer, Status, Program, Wersja, Szczegoly `
+            -AutoSize -Wrap
+
+    # ------------------------------------------------------
+    # WYBÓR KOMPUTERÓW DO WYKONANIA OPERACJI
+    # ------------------------------------------------------
+
+    Write-Host ''
+    Write-Host 'Na których komputerach wykonać operację?' `
+        -ForegroundColor Cyan
+    Write-Host '1. Na wszystkich sprawdzonych powyżej'
+    Write-Host '2. Tylko na wybranych spośród sprawdzonych'
+    Write-Host '3. Anuluj'
+    Write-Host ''
+
+    $Zakres = Read-Host 'Wybierz opcję'
+
+    if ($Zakres -eq '3') {
+        Write-Host 'Operacja anulowana.' -ForegroundColor Yellow
+        continue
+    }
+
+    if ($Zakres -eq '1') {
+        $KomputeryDoOperacji = @($Komputery)
+    }
+    elseif ($Zakres -eq '2') {
+        Write-Host ''
+        Write-Host 'Komputery dostępne do wyboru:'
+
+        foreach ($Komputer in $Komputery) {
+            Write-Host "  - $Komputer"
+        }
+
+        Write-Host ''
+        $TekstWybranych = Read-Host `
+            'Podaj wybrane nazwy po przecinku lub średniku'
+
+        $WybraneNazwy = @(Podziel-Nazwy -Tekst $TekstWybranych)
+
+        if ($WybraneNazwy.Count -eq 0) {
+            Write-Host 'Nie wybrano żadnych komputerów. Operacja anulowana.' `
+                -ForegroundColor Yellow
+            continue
+        }
+
+        # Nie dopuszczamy komputerów, których nie było w podglądzie.
+        $Nieznane = @(
+            $WybraneNazwy |
+                Where-Object { $_ -notin $Komputery }
+        )
+
+        if ($Nieznane.Count -gt 0) {
+            Write-Host ''
+            Write-Host 'Operacja anulowana. Tych nazw nie było w podglądzie:' `
+                -ForegroundColor Red
+
+            foreach ($Nazwa in $Nieznane) {
+                Write-Host "  - $Nazwa"
+            }
+
+            Write-Host 'Uruchom operację ponownie i wybierz nazwy z pokazanej listy.'
+            continue
+        }
+
+        # Zachowujemy nazwy w takiej postaci, w jakiej zostały sprawdzone.
+        $KomputeryDoOperacji = @(
+            $Komputery |
+                Where-Object { $_ -in $WybraneNazwy }
+        )
+    }
+    else {
+        Write-Host 'Nieprawidłowa opcja. Operacja anulowana.' `
+            -ForegroundColor Yellow
+        continue
+    }
+
+    if ($KomputeryDoOperacji.Count -eq 0) {
+        Write-Host 'Nie wybrano komputerów. Operacja anulowana.' `
+            -ForegroundColor Yellow
+        continue
+    }
+
+    # ------------------------------------------------------
+    # OSTATECZNE POTWIERDZENIE
+    # ------------------------------------------------------
+
+    Write-Host ''
+    Write-Host "OPERACJA: $Operacja" -ForegroundColor Yellow
+    Write-Host 'Operacja zostanie uruchomiona na tych komputerach:'
+
+    foreach ($Komputer in $KomputeryDoOperacji) {
+        Write-Host "  - $Komputer"
+    }
+
+    if ($Operacja -eq 'Usuwanie') {
+        Write-Host ''
+        Write-Host 'Uwaga: Adobe Acrobat (64-bit) zostanie usunięty jako cała aplikacja.' `
+            -ForegroundColor Yellow
+    }
 
     Write-Host ''
     $Potwierdzenie = Read-Host 'Aby wykonać operację, wpisz TAK'
@@ -693,12 +863,16 @@ do {
         continue
     }
 
+    # ------------------------------------------------------
+    # WYKONANIE OPERACJI
+    # ------------------------------------------------------
+
     Write-Host ''
     Write-Host "WYKONYWANIE — $Operacja" -ForegroundColor Green
 
     $Wyniki = @(
         Uruchom-NaKomputerach `
-            -Komputery $Komputery `
+            -Komputery $KomputeryDoOperacji `
             -Operacja $Operacja `
             -Podglad $false
     )
@@ -707,7 +881,8 @@ do {
     Write-Host 'PODSUMOWANIE' -ForegroundColor Green
 
     $Wyniki |
-        Format-Table Komputer, Status, Program, Wersja, Kod -AutoSize -Wrap
+        Format-Table Komputer, Status, Program, Wersja, Kod `
+            -AutoSize -Wrap
 
     Write-Host ''
     Write-Host 'SZCZEGÓŁY — w tym ścieżki logów na stacjach'
